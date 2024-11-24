@@ -1,10 +1,22 @@
 import telebot
 import time
 import os
+from dotenv import load_dotenv
+from tinydb import TinyDB, Query
 
-token = os.environ.get('BOT_TOKEN')
+load_dotenv()
+token = os.getenv('BOT_TOKEN')
 
 bot = telebot.TeleBot(token)
+
+db = TinyDB('ebenevo.json')
+User = Query()
+
+# Словарь ключевых слов и ответов
+keywords = {
+    "да": "пизда",
+    "нет": "пидора ответ",
+}
 
 @bot.message_handler(commands=["start"])
 def start(message):
@@ -77,6 +89,29 @@ def mute_user(message):
     else:
         bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение пользователя, которого вы хотите замутить.")
 
+@bot.message_handler(commands=['warn'])
+def warn_user(message):
+    print('workssad')
+    if message.reply_to_message:
+            user_id = message.reply_to_message.from_user.id
+            username = message.reply_to_message.from_user.username
+            print("suc")
+            user_data = db.get(User.id == user_id)
+            if user_data:
+                warnings_count = user_data['warnings'] + 1
+                db.update({'warnings': warnings_count}, User.id == user_id)        
+            else:
+                db.insert({'id': user_id, 'warnings': 1})
+                warnings_count = 1
+
+            if warnings_count >= 3:
+                bot.kick_chat_member(message.chat.id, user_id)
+                bot.send_message(message.chat.id, f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
+                db.remove(User.id == user_id)
+            else:
+                bot.send_message(message.chat.id, f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}")
+    else:
+        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которому хотите выдать предупреждение.")
 
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome_new_member(message):
@@ -89,5 +124,14 @@ def farewell_member(message):
     left_member = message.left_chat_member
     # Прощаемся с ушедшим участником
     bot.send_message(message.chat.id, f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
+
+@bot.message_handler(func=lambda message: True)
+def respond_to_keywords(message):
+    # Проверяем, содержит ли сообщение ключевые слова
+    for keyword, response in keywords.items():
+        if keyword == message.text.lower():
+            bot.reply_to(message, response)
+            break  # Выходим из цикла после первого совпадения
+
 
 bot.infinity_polling(none_stop=True)
