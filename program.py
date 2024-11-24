@@ -18,20 +18,27 @@ keywords = {
     "нет": "пидора ответ",
 }
 
+def is_admin(message):
+        chat_id = message.chat.id
+        user_id = message.from_user.id
+        user_status = bot.get_chat_member(chat_id, user_id).status
+        if user_status == 'administrator' or user_status == 'creator':
+            return True
+        else:
+            return False
+        
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.reply_to(message, "Привет! Я бот для управления чатом. Напиши /help, чтобы узнать, что я умею.")
 
 @bot.message_handler(commands=['help'])
 def help(message):
-    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя")
+    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение")
 
 @bot.message_handler(commands=['kick'])
 def kick_user(message):
-    # Проверяем, является ли пользователь администратором
-    chat_member = bot.get_chat_member(message.chat.id, message.from_user.id)
-    
-    if chat_member.status not in ['administrator', 'creator']:
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
     
@@ -63,39 +70,43 @@ def kick_user(message):
 
 @bot.message_handler(commands=['mute'])
 def mute_user(message):
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
     if message.reply_to_message:
         chat_id = message.chat.id
         user_id = message.reply_to_message.from_user.id
-        user_status = bot.get_chat_member(chat_id, user_id).status
-        if user_status == 'administrator' or user_status == 'creator':
-            bot.reply_to(message, "Невозможно замутить администратора.")
-        else:
-            duration = 60 # Значение по умолчанию - 1 минута
-            args = message.text.split()[1:]
-            if args:
-                try:
-                    duration = int(args[0])
-                except ValueError:
-                    bot.reply_to(message, "Неправильный формат времени.")
-                    return
-                if duration < 1:
-                    bot.reply_to(message, "Время должно быть положительным числом.")
-                    return
-                if duration > 1440:
-                    bot.reply_to(message, "Максимальное время - 1 день.")
-                    return
-            bot.restrict_chat_member(chat_id, user_id, until_date=time.time()+duration*60)
-            bot.reply_to(message, f"Пользователь {message.reply_to_message.from_user.username} замучен на {duration} минут.")
+        duration = 60 # Значение по умолчанию - 1 минута
+        args = message.text.split()[1:]
+        if args:
+            try:
+                duration = int(args[0])
+            except ValueError:
+                bot.reply_to(message, "Неправильный формат времени.")
+                return
+            if duration < 1:
+                bot.reply_to(message, "Время должно быть положительным числом.")
+                return
+            if duration > 1440:
+                bot.reply_to(message, "Максимальное время - 1 день.")
+                return
+        bot.restrict_chat_member(chat_id, user_id, until_date=time.time()+duration*60)
+        bot.reply_to(message, f"Пользователь {message.reply_to_message.from_user.username} замучен на {duration} минут.")
     else:
         bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение пользователя, которого вы хотите замутить.")
 
 @bot.message_handler(commands=['warn'])
 def warn_user(message):
-    print('workssad')
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
     if message.reply_to_message:
             user_id = message.reply_to_message.from_user.id
             username = message.reply_to_message.from_user.username
-            print("suc")
             user_data = db.get(User.id == user_id)
             if user_data:
                 warnings_count = user_data['warnings'] + 1
@@ -135,3 +146,4 @@ def respond_to_keywords(message):
 
 
 bot.infinity_polling(none_stop=True)
+
