@@ -128,7 +128,9 @@ def warn_user(message):
 def welcome_new_member(message):
     for new_member in message.new_chat_members:
         # Приветствуем нового участника
-        bot.send_message(message.chat.id, f"Добро пожаловать, {new_member.first_name}! 🎉")
+        # Отправляем сообщение с ником и локальным изображением
+        with open('./images/welcome.jpg', 'rb') as photo:
+            bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, {new_member.first_name}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\n Как тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
 
 @bot.message_handler(content_types=['left_chat_member'])
 def farewell_member(message):
