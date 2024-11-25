@@ -1,8 +1,10 @@
 import telebot
 import time
 import os
+import random
 from dotenv import load_dotenv
 from tinydb import TinyDB, Query
+from anekdots import anekdots
 
 load_dotenv()
 token = os.getenv('BOT_TOKEN')
@@ -124,6 +126,13 @@ def warn_user(message):
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которому хотите выдать предупреждение.")
 
+@bot.message_handler(commands=['anekdot'])
+def say_anekdot(message):
+    # Выбор случайного анекдота
+    random_anekdot = random.choice(anekdots)
+    bot.reply_to(message, random_anekdot)
+
+
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome_new_member(message):
     for new_member in message.new_chat_members:
@@ -145,7 +154,6 @@ def respond_to_keywords(message):
         if keyword == message.text.lower():
             bot.reply_to(message, response)
             break  # Выходим из цикла после первого совпадения
-
 
 bot.infinity_polling(none_stop=True)
 
