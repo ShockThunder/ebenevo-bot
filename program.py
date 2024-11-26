@@ -174,11 +174,13 @@ def welcome_new_member(message):
         with open('./images/welcome.jpg', 'rb') as photo:
             bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, {new_member.first_name}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\n Как тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
 
-@bot.message_handler(content_types=['left_chat_member'])
-def farewell_member(message):
-    left_member = message.left_chat_member
-    # Прощаемся с ушедшим участником
-    bot.send_message(message.chat.id, f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
+@bot.message_handler(content_types=['chat_member'])
+def user_chat_member_update(message):
+    if message.chat_member.new_chat_member.status == 'left':
+        user = message.chat_member.new_chat_member.user
+        with open('./images/left.jpg', 'rb') as photo:
+            bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {user.first_name}! Мы будем по тебе скучать! 😢")
+
 
 @bot.message_handler(func=lambda message: True)
 def respond_to_keywords(message):
