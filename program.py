@@ -88,8 +88,7 @@ def ban_user(message):
                 return
             
             # Баним пользователя
-            bot.ban_chat_member(message.chat.id, user_id)
-            
+            res = bot.ban_chat_member(message.chat.id, user_id)
             # Отправляем сообщение с ником и локальным изображением
             with open('./images/ban.jpg', 'rb') as photo:
                 bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был забанен.")
@@ -172,14 +171,13 @@ def welcome_new_member(message):
         # Приветствуем нового участника
         # Отправляем сообщение с ником и локальным изображением
         with open('./images/welcome.jpg', 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, {new_member.first_name}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\n Как тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
+            bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, {new_member.first_name}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\nКак тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
 
-@bot.message_handler(content_types=['chat_member'])
+@bot.message_handler(content_types=['left_chat_member'])
 def user_chat_member_update(message):
-    if message.chat_member.new_chat_member.status == 'left':
-        user = message.chat_member.new_chat_member.user
-        with open('./images/left.jpg', 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {user.first_name}! Мы будем по тебе скучать! 😢")
+    left_member = message.left_chat_member
+    with open('./images/left.jpg', 'rb') as photo:
+        bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
 
 
 @bot.message_handler(func=lambda message: True)
