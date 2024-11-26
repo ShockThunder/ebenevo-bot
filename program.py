@@ -68,6 +68,36 @@ def kick_user(message):
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которого хотите кикнуть.")
 
+@bot.message_handler(commands=['ban'])
+def ban_user(message):
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
+    if message.reply_to_message:
+        # Если команда используется в реплае на сообщение
+        user_id = message.reply_to_message.from_user.id
+        username = message.reply_to_message.from_user.username
+
+        try:
+            # Проверяем, является ли пользователь ботом
+            user_info = bot.get_chat_member(message.chat.id, user_id)
+            if user_info.user.is_bot:
+                bot.reply_to(message, "Нельзя банить другого бота.")
+                return
+            
+            # Баним пользователя
+            bot.ban_chat_member(message.chat.id, user_id)
+            
+            # Отправляем сообщение с ником и локальным изображением
+            with open('./images/ban.jpg', 'rb') as photo:
+                bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был забанен.")
+                
+        except Exception as e:
+            bot.reply_to(message, f"Не удалось забанить пользователя: {e}")
+    else:
+        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которого хотите забанить.")
 
 
 @bot.message_handler(commands=['mute'])
@@ -118,11 +148,14 @@ def warn_user(message):
                 warnings_count = 1
 
             if warnings_count >= 3:
-                bot.kick_chat_member(message.chat.id, user_id)
-                bot.send_message(message.chat.id, f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
+                bot.ban_chat_member(message.chat.id, user_id)
+                            # Отправляем сообщение с ником и локальным изображением
+                with open('./images/ban.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
                 db.remove(User.id == user_id)
             else:
-                bot.send_message(message.chat.id, f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}")
+                with open('./images/warn.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которому хотите выдать предупреждение.")
 
