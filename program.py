@@ -2,12 +2,16 @@ import telebot
 import time
 import os
 import random
+import requests
+from bs4 import BeautifulSoup
+
 from dotenv import load_dotenv
 from tinydb import TinyDB, Query
 from anekdots import anekdots
 
 load_dotenv()
 token = os.getenv('BOT_TOKEN')
+admin_channel_id = os.getenv('CHANNEL_ID')
 
 bot = telebot.TeleBot(token)
 
@@ -21,6 +25,12 @@ keywords = {
     "молодец": "соси конец"
 }
 
+whitelist = {
+    -1002482107448,
+    -1002434589436,
+    -1002173225368
+}
+
 def is_admin(message):
         chat_id = message.chat.id
         user_id = message.from_user.id
@@ -29,7 +39,20 @@ def is_admin(message):
             return True
         else:
             return False
-        
+
+def get_random_anekdot():
+   headers = {
+       'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
+   }
+
+   url = 'https://www.anekdot.ru/random/anekdot/'
+   r = requests.get(url=url, headers=headers)
+
+   soup = BeautifulSoup(r.text, 'html.parser')
+
+   anekdot = soup.find_all('div', class_="text")[0]
+   return anekdot
+
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.reply_to(message, "Привет! Я бот для управления чатом. Напиши /help, чтобы узнать, что я умею.")
@@ -63,7 +86,12 @@ def kick_user(message):
             # Отправляем сообщение с ником и локальным изображением
             with open('./images/kick.jpg', 'rb') as photo:
                 bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут.")
-                
+
+                  #шлем сообщение в админский канал  
+            bot.send_message(admin_channel_id, f"🔴 #КИК\n"
+                                                f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
+                                                f"• Группа: {message.chat.title} [{message.chat.id}]\n")
+
         except Exception as e:
             bot.reply_to(message, f"Не удалось кикнуть пользователя: {e}")
     else:
@@ -93,7 +121,12 @@ def ban_user(message):
             # Отправляем сообщение с ником и локальным изображением
             with open('./images/ban.jpg', 'rb') as photo:
                 bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был забанен.")
-                
+
+            #шлем сообщение в админский канал
+            bot.send_message(admin_channel_id, f"🔴 #БАН\n"
+                                      f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
+                                      f"• Группа: {message.chat.title} [{message.chat.id}]\n")
+
         except Exception as e:
             bot.reply_to(message, f"Не удалось забанить пользователя: {e}")
     else:
@@ -156,14 +189,25 @@ def warn_user(message):
             else:
                 with open('./images/warn.jpg', 'rb') as photo:
                     bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
+
+                #шлем сообщение в админский канал
+                bot.send_message(admin_channel_id, f"⚠️ #ПРЕДУПРЕЖДЕНИЕ\n"
+                                      f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
+                                      f"• Группа: {message.chat.title} [{message.chat.id}]\n")
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которому хотите выдать предупреждение.")
 
 @bot.message_handler(commands=['anekdot'])
 def say_anekdot(message):
+    print(message.chat.id)
     # Выбор случайного анекдота
     random_anekdot = random.choice(anekdots)
     bot.reply_to(message, random_anekdot)
+
+@bot.message_handler(commands=['anekdot-r'])
+def say_anekdot(message):
+    anekdot = get_random_anekdot()
+    bot.reply_to(message, anekdot)
 
 
 @bot.message_handler(content_types=['new_chat_members'])
@@ -173,12 +217,41 @@ def welcome_new_member(message):
         # Отправляем сообщение с ником и локальным изображением
         with open('./images/welcome.jpg', 'rb') as photo:
             bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, {new_member.first_name}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\nКак тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
+    
+    #шлем сообщение в админский канал
+    bot.send_message(admin_channel_id, f"➕ #НОВЫЙ_ПОЛЬЗОВАТЕЛЬ\n"
+                                      f"• Кто: {new_member.full_name} [{new_member.id}]\n"
+                                      f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
 @bot.message_handler(content_types=['left_chat_member'])
 def user_chat_member_update(message):
     left_member = message.left_chat_member
     with open('./images/left.jpg', 'rb') as photo:
         bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
+    
+    #шлем сообщение в админский канал
+    bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
+                                  f"• Кто: {message.left_chat_member.full_name} [{message.left_chat_member.id}]\n"
+                                  f"• Группа: {message.chat.title} [{message.chat.id}]\n")
+
+
+
+@bot.message_handler(content_types=['chat_member'])
+def chat_member_update(message):
+    new_member = message.chat_member.new_chat_member
+    old_member = message.chat_member.old_chat_member
+
+    # Проверяем, если статус изменился
+    if new_member.status != old_member.status:
+        if new_member.status == 'administrator':
+                    bot.send_message(admin_channel_id, f"🟢 #ПОВЫШЕНИЕ_РОЛИ\n"
+                                                f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
+                                                f"• Новая роль: Администратор\n"
+                                                f"• Группа: {message.chat.title} [{message.chat.id}]")
+        elif new_member.status == 'left':
+            bot.send_message(admin_channel_id, f"🔴 #УДАЛЕНИЕ_РОЛИ\n"
+                                        f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
+                                        f"• Группа: {message.chat.title} [{message.chat.id}]")
 
 
 @bot.message_handler(func=lambda message: True)
@@ -193,4 +266,3 @@ def respond_to_keywords(message):
             break  # Выходим из цикла после первого совпадения
 
 bot.infinity_polling(none_stop=True)
-
