@@ -51,6 +51,10 @@ def get_random_anekdot():
    soup = BeautifulSoup(r.text, 'html.parser')
 
    anekdot = soup.find_all('div', class_="text")[0]
+
+   for br in anekdot.find_all('br'):
+    br.replace_with('\n')
+
    return anekdot
 
 @bot.message_handler(commands=["start"])
