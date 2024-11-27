@@ -203,7 +203,6 @@ def warn_user(message):
 
 @bot.message_handler(commands=['anekdot'])
 def say_anekdot(message):
-    print(message.chat.id)
     # Выбор случайного анекдота
     random_anekdot = random.choice(anekdots)
     bot.reply_to(message, random_anekdot)
