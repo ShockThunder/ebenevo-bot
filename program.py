@@ -18,6 +18,7 @@ User = Query()
 keywords = {
     "да": "пизда",
     "нет": "пидора ответ",
+    "молодец": "соси конец"
 }
 
 def is_admin(message):
@@ -185,7 +186,10 @@ def respond_to_keywords(message):
     # Проверяем, содержит ли сообщение ключевые слова
     for keyword, response in keywords.items():
         if keyword == message.text.lower():
-            bot.reply_to(message, response)
+            if(keyword == "молодец" and message.from_user.id == 80207393):
+                bot.reply_to(message, "спасибо")
+            else:
+                bot.reply_to(message, response)
             break  # Выходим из цикла после первого совпадения
 
 bot.infinity_polling(none_stop=True)
