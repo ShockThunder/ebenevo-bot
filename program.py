@@ -64,7 +64,7 @@ def start(message):
 
 @bot.message_handler(commands=['help'])
 def help(message):
-    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение")
+    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение\n/unwarn - снять предупреждение\n/mywarns - узнать количество своих варнов\n/checkwarns - узнать количество варнов пользователя\n/ban - забанить")
 
 @bot.message_handler(commands=['kick'])
 def kick_user(message):
@@ -202,6 +202,73 @@ def warn_user(message):
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, которому хотите выдать предупреждение.")
 
+@bot.message_handler(commands=['unwarn'])
+def unwarn_user(message):
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+        user_data = db.get(User.id == user_id)
+        
+        if user_data:
+            warnings_count = user_data['warnings']
+            if warnings_count > 0:
+                warnings_count -= 1
+                db.update({'warnings': warnings_count}, User.id == user_id)
+                
+                if warnings_count == 0:
+                    # Если предупреждений больше нет, можно удалить пользователя из базы
+                    db.remove(User.id == user_id)
+                    with open('./images/unwarn.jpg', 'rb') as photo:
+                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                else:
+                    with open('./images/light_unwarn.jpg', 'rb') as photo:
+                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+            else:
+                bot.reply_to(message, f"У пользователя @{message.reply_to_message.from_user.username} нет предупреждений.")
+        else:
+            bot.reply_to(message, "Пользователь не имеет предупреждений.")
+    else:
+        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, у которого хотите снять предупреждение.")
+
+@bot.message_handler(commands=['mywarns'])
+def my_warns(message):
+    user_id = message.from_user.id
+    user_data = db.get(User.id == user_id)
+    
+    if user_data:
+        warnings_count = user_data['warnings']
+        bot.reply_to(message, f"У вас {warnings_count} предупреждений.")
+    else:
+        bot.reply_to(message, "У вас нет предупреждений.")
+
+@bot.message_handler(commands=['checkwarns'])
+def check_warns(message):
+    # Проверяем, является ли пользователь администратором    
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
+    # Проверяем, указано ли сообщение с ID или username пользователя
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+        username = message.reply_to_message.from_user.username
+    else:
+        # Если команда не была вызвана в ответ на сообщение, отправляем инструкцию
+        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, чьи предупреждения вы хотите проверить.")
+        return
+
+    user_data = db.get(User.id == user_id)
+    
+    if user_data:
+        warnings_count = user_data['warnings']
+        bot.reply_to(message, f"Пользователь @{username} имеет {warnings_count} предупреждений.")
+    else:
+        bot.reply_to(message, f"У пользователя @{username} нет предупреждений.")
+
 @bot.message_handler(commands=['anekdot'])
 def say_anekdot(message):
     # Выбор случайного анекдота
@@ -252,10 +319,19 @@ def chat_member_update(message):
                                                 f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
                                                 f"• Новая роль: Администратор\n"
                                                 f"• Группа: {message.chat.title} [{message.chat.id}]")
-        elif new_member.status == 'left':
+        elif old_member.status == 'administrator':
             bot.send_message(admin_channel_id, f"🔴 #УДАЛЕНИЕ_РОЛИ\n"
                                         f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
+                                        f"• Удалена роль: Администратор\n"
                                         f"• Группа: {message.chat.title} [{message.chat.id}]")
+
+        elif new_member.status == 'left':
+            left_member = message.left_chat_member
+            with open('./images/left.jpg', 'rb') as photo:
+                bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
+            bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
+                                            f"• Кто: {message.left_chat_member.full_name} [{message.left_chat_member.id}]\n"
+                                            f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
 
 @bot.message_handler(func=lambda message: True)
