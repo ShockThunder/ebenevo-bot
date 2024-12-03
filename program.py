@@ -294,6 +294,15 @@ def add_user_to_party(message):
     else:
         bot.reply_to(message, f"уже в списке")
 
+@bot.message_handler(commands=['noparty'])
+def add_user_to_party(message):
+    user_id = message.from_user.id
+    User = Query()
+    if game_db.contains(User.user_id == user_id):
+        game_db.remove({'user_id': user_id})
+        bot.reply_to(message, f"вас не будут тегать")
+    else:
+        bot.reply_to(message, f"тебя и так не трогали")
 
 @bot.message_handler(commands=['partyoff'])
 def party_off(message):
@@ -390,5 +399,19 @@ def respond_to_keywords(message):
         mention_link = f"tg://user?id={random_user_id}"
         bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')    
     
+@bot.message_handler(content_types=['photo'])
+def handle_photo(message):        
+    if not party_mode:
+        return
+
+    if not message.caption:
+        return
+    
+    cleaned_message = clean_message(message.caption.lower())
+    if cleaned_message in ["кто", "мы"]:
+        user_ids = [user['user_id'] for user in game_db.all()]
+        random_user_id = random.choice(user_ids)
+        mention_link = f"tg://user?id={random_user_id}"
+        bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')    
 
 bot.infinity_polling(none_stop=True)
