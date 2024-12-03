@@ -284,7 +284,27 @@ def say_anekdot(message):
     anekdot = get_random_anekdot()
     bot.reply_to(message, anekdot)
 
+@bot.message_handler(commands=['party'])
+def add_user_to_party(message):
+    user_id = message.from_user.id
+    User = Query()
+    if not game_db.contains(User.user_id == user_id):
+        game_db.insert({'user_id': user_id})
+        bot.reply_to(message, f"вас будут тегать")
+    else:
+        bot.reply_to(message, f"уже в списке")
 
+
+@bot.message_handler(commands=['partyoff'])
+def party_off(message):
+    party_mode = False
+    bot.reply_to(message, f"Режим теганья выключен")    
+
+@bot.message_handler(commands=['partyon'])
+def party_on(message):
+    party_mode = True
+    bot.reply_to(message, f"Режим теганья включен")    
+    
 @bot.message_handler(content_types=['new_chat_members'])
 def welcome_new_member(message):
     for new_member in message.new_chat_members:
@@ -338,18 +358,6 @@ def chat_member_update(message):
                                             f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
 
-@bot.message_handler(func=lambda message: True)
-def respond_to_keywords(message):
-    # Проверяем, содержит ли сообщение ключевые слова
-    for keyword, response in keywords.items():
-        if keyword == message.text.lower():
-            if(keyword == "молодец" and message.from_user.id == 80207393):
-                bot.reply_to(message, "спасибо")
-            else:
-                bot.reply_to(message, response)
-            break  # Выходим из цикла после первого совпадения
-    
-
 def clean_message(message):
     # Убираем знаки препинания
     message = message.translate(str.maketrans('', '', string.punctuation))
@@ -362,7 +370,16 @@ def clean_message(message):
     return message
 
 @bot.message_handler(func=lambda message: True)
-def handle_message(message):
+def respond_to_keywords(message):
+    # Проверяем, содержит ли сообщение ключевые слова
+    for keyword, response in keywords.items():
+        if keyword == message.text.lower():
+            if(keyword == "молодец" and message.from_user.id == 80207393):
+                bot.reply_to(message, "спасибо")
+            else:
+                bot.reply_to(message, response)
+            break  # Выходим из цикла после первого совпадения
+    
     if not party_mode:
         return
 
@@ -371,25 +388,7 @@ def handle_message(message):
         user_ids = [user['user_id'] for user in game_db.all()]
         random_user_id = random.choice(user_ids)
         mention_link = f"tg://user?id={random_user_id}"
-        bot.reply_to(message, f"Привет, [кто?]({mention_link})!", parse_mode='Markdown')    
-
-@bot.message_handler(commands=['party'])
-def tag_user(message):
-    user_id = message.from_user.id
-    User = Query()
-    if not game_db.contains(User.user_id == user_id):
-        game_db.insert({'user_id': user_id})
-        bot.reply_to(message, f"вас будут тегать")   
-
-
-@bot.message_handler(commands=['partyoff'])
-def tag_user(message):
-    party_mode = False
-    bot.reply_to(message, f"Режим теганья выключен")    
-
-@bot.message_handler(commands=['partyon'])
-def tag_user(message):
-    party_mode = True
-    bot.reply_to(message, f"Режим теганья включен")    
+        bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')    
+    
 
 bot.infinity_polling(none_stop=True)
