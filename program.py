@@ -379,6 +379,7 @@ def tag_user(message):
     User = Query()
     if not game_db.contains(User.user_id == user_id):
         game_db.insert({'user_id': user_id})
+        bot.reply_to(message, f"вас будут тегать")   
 
 
 @bot.message_handler(commands=['partyoff'])
