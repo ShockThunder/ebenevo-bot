@@ -3,6 +3,7 @@ import time
 import os
 import random
 import requests
+import string
 from bs4 import BeautifulSoup
 
 from dotenv import load_dotenv
@@ -16,6 +17,7 @@ admin_channel_id = os.getenv('CHANNEL_ID')
 bot = telebot.TeleBot(token)
 
 db = TinyDB('ebenevo.json')
+game_db = TinyDB('user_ids.json')
 User = Query()
 
 # Словарь ключевых слов и ответов
@@ -30,6 +32,8 @@ whitelist = {
     -1002434589436,
     -1002173225368
 }
+
+party_mode = True
 
 def is_admin(message):
         chat_id = message.chat.id
@@ -344,5 +348,47 @@ def respond_to_keywords(message):
             else:
                 bot.reply_to(message, response)
             break  # Выходим из цикла после первого совпадения
+    
+
+def clean_message(message):
+    # Убираем знаки препинания
+    message = message.translate(str.maketrans('', '', string.punctuation))
+    # Убираем лишние слова
+    words_to_remove = ["чат", "я", "и"]
+    for word in words_to_remove:
+        message = message.replace(word, "")
+    # Убираем лишние пробелы
+    message = ' '.join(message.split())
+    return message
+
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    if not party_mode:
+        return
+
+    cleaned_message = clean_message(message.text.lower())
+    if cleaned_message in ["кто", "мы"]:
+        user_ids = [user['user_id'] for user in game_db.all()]
+        random_user_id = random.choice(user_ids)
+        mention_link = f"tg://user?id={random_user_id}"
+        bot.reply_to(message, f"Привет, [кто?]({mention_link})!", parse_mode='Markdown')    
+
+@bot.message_handler(commands=['party'])
+def tag_user(message):
+    user_id = message.from_user.id
+    User = Query()
+    if not game_db.contains(User.user_id == user_id):
+        game_db.insert({'user_id': user_id})
+
+
+@bot.message_handler(commands=['partyoff'])
+def tag_user(message):
+    party_mode = False
+    bot.reply_to(message, f"Режим теганья выключен")    
+
+@bot.message_handler(commands=['partyon'])
+def tag_user(message):
+    party_mode = True
+    bot.reply_to(message, f"Режим теганья включен")    
 
 bot.infinity_polling(none_stop=True)
