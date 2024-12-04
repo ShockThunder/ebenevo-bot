@@ -1,5 +1,6 @@
 from tinydb import TinyDB, Query
 
-db = TinyDB('ebenevo.json')
-game_db = TinyDB('user_ids.json')
-User = Query()
+db = TinyDB('./data/ebenevo.json')
+game_db = TinyDB('./data/user_ids.json')
+who_game_db = TinyDB('./data/who_game.json')
+query = Query()

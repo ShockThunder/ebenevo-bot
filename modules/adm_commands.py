@@ -6,7 +6,7 @@ from data import db_handler
 bot = ebenevobot.bot
 admin_channel_id = ebenevobot.report_channel
 db = db_handler.db
-User = db_handler.User
+query = db_handler.query
 
 def is_admin(message):
         chat_id = message.chat.id
@@ -136,10 +136,10 @@ def warn_user(message):
     if message.reply_to_message:
             user_id = message.reply_to_message.from_user.id
             username = message.reply_to_message.from_user.username
-            user_data = db.get(User.id == user_id)
+            user_data = db.get(query.id == user_id)
             if user_data:
                 warnings_count = user_data['warnings'] + 1
-                db.update({'warnings': warnings_count}, User.id == user_id)        
+                db.update({'warnings': warnings_count}, query.id == user_id)        
             else:
                 db.insert({'id': user_id, 'warnings': 1})
                 warnings_count = 1
@@ -149,7 +149,7 @@ def warn_user(message):
                             # Отправляем сообщение с ником и локальным изображением
                 with open('./images/ban.jpg', 'rb') as photo:
                     bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
-                db.remove(User.id == user_id)
+                db.remove(query.id == user_id)
             else:
                 with open('./images/warn.jpg', 'rb') as photo:
                     bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
@@ -170,17 +170,17 @@ def unwarn_user(message):
     
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
-        user_data = db.get(User.id == user_id)
+        user_data = db.get(query.id == user_id)
         
         if user_data:
             warnings_count = user_data['warnings']
             if warnings_count > 0:
                 warnings_count -= 1
-                db.update({'warnings': warnings_count}, User.id == user_id)
+                db.update({'warnings': warnings_count}, query.id == user_id)
                 
                 if warnings_count == 0:
                     # Если предупреждений больше нет, можно удалить пользователя из базы
-                    db.remove(User.id == user_id)
+                    db.remove(query.id == user_id)
                     with open('./images/unwarn.jpg', 'rb') as photo:
                         bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
                 else:
@@ -196,7 +196,7 @@ def unwarn_user(message):
 @bot.message_handler(commands=['mywarns'])
 def my_warns(message):
     user_id = message.from_user.id
-    user_data = db.get(User.id == user_id)
+    user_data = db.get(query.id == user_id)
     
     if user_data:
         warnings_count = user_data['warnings']
@@ -211,16 +211,17 @@ def check_warns(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
     
-    # Проверяем, указано ли сообщение с ID или username пользователя
+    # Проверяем, указано ли сообщение с ID пользователя
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
         username = message.reply_to_message.from_user.username
     else:
-        # Если команда не была вызвана в ответ на сообщение, отправляем инструкцию
-        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, чьи предупреждения вы хотите проверить.")
-        return
-
-    user_data = db.get(User.id == user_id)
+        # Если команда не была вызвана в ответ на сообщение, покажем свои варны
+        user_id = message.from_user.id
+        username = message.from_user.username
+        user_data = db.get(query.id == user_id)
+    
+    user_data = db.get(query.id == user_id)
     
     if user_data:
         warnings_count = user_data['warnings']
