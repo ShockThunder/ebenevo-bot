@@ -6,7 +6,7 @@ from data import db_handler
 
 bot = ebenevobot.bot
 game_db = db_handler.game_db
-User = db_handler.User
+query = db_handler.query
 
 party_mode = True
 
@@ -24,8 +24,7 @@ def clean_message(message):
 @bot.message_handler(commands=['party'])
 def add_user_to_party(message):
     user_id = message.from_user.id
-    User = db_handler.Query()
-    if not game_db.contains(User.user_id == user_id):
+    if not game_db.contains(query.user_id == user_id):
         game_db.insert({'user_id': user_id})
         bot.reply_to(message, f"вас будут тегать")
     else:
@@ -34,8 +33,8 @@ def add_user_to_party(message):
 @bot.message_handler(commands=['noparty'])
 def add_user_to_party(message):
     user_id = message.from_user.id
-    User = db_handler.Query()
-    if game_db.contains(User.user_id == user_id):
+
+    if game_db.contains(query.user_id == user_id):
         game_db.remove({'user_id': user_id})
         bot.reply_to(message, f"вас не будут тегать")
     else:
@@ -51,17 +50,28 @@ def party_on(message):
     party_mode = True
     bot.reply_to(message, f"Режим теганья включен")
 
+
+def play_who_game(message, text):
+    cleaned_message = clean_message(text.lower())
+    if cleaned_message in ["кто", "мы"]:
+        user_ids = [user['user_id'] for user in game_db.all()]
+        random_user_id = random.choice(user_ids)
+        mention_link = f"tg://user?id={random_user_id}"
+        bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')  
+
 @bot.message_handler(content_types=['photo'])
-def handle_photo(message):        
+def play_who_game_photo(message):        
     if not party_mode:
         return
 
     if not message.caption:
         return
     
-    cleaned_message = clean_message(message.caption.lower())
-    if cleaned_message in ["кто", "мы"]:
-        user_ids = [user['user_id'] for user in game_db.all()]
-        random_user_id = random.choice(user_ids)
-        mention_link = f"tg://user?id={random_user_id}"
-        bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')  
+    play_who_game(message, message.caption)
+
+@bot.message_handler(func=lambda message: True)
+def play_who_game_text(message):   
+    if not party_mode:
+            return
+
+    play_who_game(message, message.text)
