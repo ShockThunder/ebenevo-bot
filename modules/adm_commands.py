@@ -23,7 +23,7 @@ def start(message):
 
 @bot.message_handler(commands=['help'])
 def help(message):
-    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение\n/unwarn - снять предупреждение\n/mywarns - узнать количество своих варнов\n/checkwarns - узнать количество варнов пользователя\n/ban - забанить")
+    bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение\n/unwarn - снять предупреждение\n/checkwarns - узнать количество варнов пользователя\n/ban - забанить")
 
 @bot.message_handler(commands=['kick'])
 def kick_user(message):
@@ -195,13 +195,13 @@ def unwarn_user(message):
 
 @bot.message_handler(commands=['checkwarns'])
 def check_warns(message):
-    # Проверяем, является ли пользователь администратором    
-    if not is_admin(message):
-        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
-        return
     
     # Проверяем, указано ли сообщение с ID пользователя
     if message.reply_to_message:
+        # Проверяем, является ли пользователь администратором    
+        if not is_admin(message):
+            bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+            return
         user_id = message.reply_to_message.from_user.id
         username = message.reply_to_message.from_user.username
     else:
