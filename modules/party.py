@@ -6,6 +6,7 @@ from data import db_handler
 
 bot = ebenevobot.bot
 game_db = db_handler.game_db
+who_game_db = db_handler.who_game_db
 query = db_handler.query
 
 party_mode = True
@@ -71,6 +72,17 @@ def play_who_game_photo(message):
 
 @bot.message_handler(func=lambda message: True)
 def play_who_game_text(message):   
+
+    user_id = message.from_user.id
+    username = message.from_user.username
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name or ''  # last_name может быть None
+
+    # Проверка, существует ли пользователь в базе данных
+    if not who_game_db.contains(query.user_id == user_id):
+        # Если пользователь не существует, добавляем его в базу данных
+        who_game_db.insert({'user_id': user_id, 'username': username, 'first_name': first_name, 'last_name': last_name})
+                   
     if not party_mode:
             return
 

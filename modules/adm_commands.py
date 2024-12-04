@@ -211,15 +211,16 @@ def check_warns(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
     
-    # Проверяем, указано ли сообщение с ID или username пользователя
+    # Проверяем, указано ли сообщение с ID пользователя
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
         username = message.reply_to_message.from_user.username
     else:
-        # Если команда не была вызвана в ответ на сообщение, отправляем инструкцию
-        bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, чьи предупреждения вы хотите проверить.")
-        return
-
+        # Если команда не была вызвана в ответ на сообщение, покажем свои варны
+        user_id = message.from_user.id
+        username = message.from_user.username
+        user_data = db.get(query.id == user_id)
+    
     user_data = db.get(query.id == user_id)
     
     if user_data:
