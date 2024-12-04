@@ -49,30 +49,29 @@ anekdots = [
 
 @bot.message_handler(commands=['anekdot'])
 def say_anekdot(message):
-    print('anekdot')
     # Выбор случайного анекдота
     random_anekdot = random.choice(anekdots)
     bot.reply_to(message, random_anekdot)
 
-def get_random_anekdot():
-   headers = {
-       'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
-   }
+# def get_random_anekdot():
+#    headers = {
+#        'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
+#    }
 
-   url = 'https://baneks.ru/random'
-   r = requests.get(url=url, headers=headers)
+#    url = 'https://baneks.ru/random'
+#    r = requests.get(url=url, headers=headers)
 
-   soup = BeautifulSoup(r.text, 'html.parser')
+#    soup = BeautifulSoup(r.text, 'html.parser')
 
-   anekdot = soup.find_all('p')[0]
+#    anekdot = soup.find_all('p')[0]
 
-   for br in anekdot.find_all('br'):
-    br.replace_with('\n')
+#    for br in anekdot.find_all('br'):
+#     br.replace_with('\n')
 
-   print(anekdot.get_text())
-   return anekdot.get_text()
+#    print(anekdot.get_text())
+#    return anekdot.get_text()
 
-@bot.message_handler(commands=['anekdot-r'])
-def say_random_anekdot(message):
-    anekdot = get_random_anekdot()
-    bot.reply_to(message, anekdot)
+# @bot.message_handler(commands=['banek'])
+# def say_random_anekdot(message):
+#     anekdot = get_random_anekdot()
+#     bot.reply_to(message, anekdot)

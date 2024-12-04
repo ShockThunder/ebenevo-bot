@@ -11,6 +11,12 @@ query = db_handler.query
 
 party_mode = True
 
+keywords = {
+    "да": "пизда",
+    "нет": "пидора ответ",
+    "молодец": "соси конец"
+}
+
 def clean_message(message):
     # Убираем знаки препинания
     message = message.translate(str.maketrans('', '', string.punctuation))
@@ -61,7 +67,7 @@ def play_who_game(message, text):
         bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')  
 
 @bot.message_handler(content_types=['photo'])
-def play_who_game_photo(message):        
+def handle_photo_message(message):        
     if not party_mode:
         return
 
@@ -71,7 +77,7 @@ def play_who_game_photo(message):
     play_who_game(message, message.caption)
 
 @bot.message_handler(func=lambda message: True)
-def play_who_game_text(message):   
+def handle_text_message(message):   
 
     user_id = message.from_user.id
     username = message.from_user.username
@@ -82,7 +88,15 @@ def play_who_game_text(message):
     if not who_game_db.contains(query.user_id == user_id):
         # Если пользователь не существует, добавляем его в базу данных
         who_game_db.insert({'user_id': user_id, 'username': username, 'first_name': first_name, 'last_name': last_name})
-                   
+
+    for keyword, response in keywords.items():
+        if keyword == message.text.lower():
+            if(keyword == "молодец" and message.from_user.id == 80207393):
+                bot.reply_to(message, "спасибо")
+            else:
+                bot.reply_to(message, response)
+            break  # Выходим из цикла после первого совпадения    
+
     if not party_mode:
             return
 
