@@ -49,6 +49,7 @@ anekdots = [
 
 @bot.message_handler(commands=['anekdot'])
 def say_anekdot(message):
+    print('anekdot')
     # Выбор случайного анекдота
     random_anekdot = random.choice(anekdots)
     bot.reply_to(message, random_anekdot)
@@ -72,6 +73,6 @@ def get_random_anekdot():
    return anekdot.get_text()
 
 @bot.message_handler(commands=['anekdot-r'])
-def say_anekdot(message):
+def say_random_anekdot(message):
     anekdot = get_random_anekdot()
     bot.reply_to(message, anekdot)

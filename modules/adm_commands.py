@@ -193,17 +193,6 @@ def unwarn_user(message):
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, у которого хотите снять предупреждение.")
 
-@bot.message_handler(commands=['mywarns'])
-def my_warns(message):
-    user_id = message.from_user.id
-    user_data = db.get(query.id == user_id)
-    
-    if user_data:
-        warnings_count = user_data['warnings']
-        bot.reply_to(message, f"У вас {warnings_count} предупреждений.")
-    else:
-        bot.reply_to(message, "У вас нет предупреждений.")
-
 @bot.message_handler(commands=['checkwarns'])
 def check_warns(message):
     # Проверяем, является ли пользователь администратором    
