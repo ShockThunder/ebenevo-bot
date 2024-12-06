@@ -5,7 +5,6 @@ from core import ebenevobot
 from data import db_handler
 
 bot = ebenevobot.bot
-game_db = db_handler.game_db
 who_game_db = db_handler.who_game_db
 query = db_handler.query
 
@@ -31,8 +30,14 @@ def clean_message(message):
 @bot.message_handler(commands=['party'])
 def add_user_to_party(message):
     user_id = message.from_user.id
-    if not game_db.contains(query.user_id == user_id):
-        game_db.insert({'user_id': user_id})
+    username = message.from_user.username
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name or ''  # last_name может быть None
+
+    # Проверка, существует ли пользователь в базе данных
+    if not who_game_db.contains(query.user_id == user_id):
+        # Если пользователь не существует, добавляем его в базу данных
+        who_game_db.insert({'user_id': user_id, 'username': username, 'first_name': first_name, 'last_name': last_name})
         bot.reply_to(message, f"вас будут тегать")
     else:
         bot.reply_to(message, f"уже в списке")
@@ -41,8 +46,8 @@ def add_user_to_party(message):
 def add_user_to_party(message):
     user_id = message.from_user.id
 
-    if game_db.contains(query.user_id == user_id):
-        game_db.remove({'user_id': user_id})
+    if who_game_db.contains(query.user_id == user_id):
+        who_game_db.remove(query.user_id == user_id)
         bot.reply_to(message, f"вас не будут тегать")
     else:
         bot.reply_to(message, f"тебя и так не трогали")
@@ -61,10 +66,16 @@ def party_on(message):
 def play_who_game(message, text):
     cleaned_message = clean_message(text.lower())
     if cleaned_message in ["кто", "мы"]:
-        user_ids = [user['user_id'] for user in game_db.all()]
-        random_user_id = random.choice(user_ids)
-        mention_link = f"tg://user?id={random_user_id}"
-        bot.reply_to(message, f"[Тыкнул пальцем]({mention_link})!", parse_mode='Markdown')  
+        random_user= random.choice(who_game_db.all())
+        if not random_user['username']:
+            mention_link = f"tg://user?id={random_user['user_id']}"
+            bot.reply_to(message, f"[{random_user['first_name']} {random_user['last_name']}]({mention_link})!"
+                                  f"\nЧтобы выйти - /noparty"
+                                  f"\nЧтобы играть - /party", parse_mode='Markdown') 
+        else:
+            bot.reply_to(message, f"@{random_user['username']}"
+                                  f"\nЧтобы выйти - /noparty"
+                                  f"\nЧтобы играть - /party") 
 
 @bot.message_handler(content_types=['photo'])
 def handle_photo_message(message):        
@@ -78,17 +89,6 @@ def handle_photo_message(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_text_message(message):   
-
-    user_id = message.from_user.id
-    username = message.from_user.username
-    first_name = message.from_user.first_name
-    last_name = message.from_user.last_name or ''  # last_name может быть None
-
-    # Проверка, существует ли пользователь в базе данных
-    if not who_game_db.contains(query.user_id == user_id):
-        # Если пользователь не существует, добавляем его в базу данных
-        who_game_db.insert({'user_id': user_id, 'username': username, 'first_name': first_name, 'last_name': last_name})
-
     for keyword, response in keywords.items():
         if keyword == message.text.lower():
             if(keyword == "молодец" and message.from_user.id == 80207393):

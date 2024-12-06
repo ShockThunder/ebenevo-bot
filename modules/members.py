@@ -21,28 +21,11 @@ def welcome_new_member(message):
                                       f"• Кто: {new_member.full_name} [{new_member.id}]\n"
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
-@bot.message_handler(content_types=['left_chat_member'])
-def user_chat_member_update(message):
-    left_member = message.left_chat_member
-    if (left_member.id == 80207393):
-        with open('./images/cry.jpg', 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo)
-    else:
-        with open('./images/left.jpg', 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {left_member.first_name}! Мы будем по тебе скучать! 😢")
-    
-    #шлем сообщение в админский канал
-    bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
-                                  f"• Кто: {message.left_chat_member.full_name} [{message.left_chat_member.id}]\n"
-                                  f"• Группа: {message.chat.title} [{message.chat.id}]\n")
-
-
-
-@bot.message_handler(content_types=['chat_member'])
+@bot.chat_member_handler(func=None)
 def chat_member_update(message):
-    new_member = message.chat_member.new_chat_member
-    old_member = message.chat_member.old_chat_member
 
+    new_member = message.new_chat_member
+    old_member = message.old_chat_member
 
     # Проверяем, если статус изменился
     if new_member.status != old_member.status:
@@ -56,3 +39,16 @@ def chat_member_update(message):
                                         f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
                                         f"• Удалена роль: Администратор\n"
                                         f"• Группа: {message.chat.title} [{message.chat.id}]")
+            
+        elif new_member.status == 'left':
+            if (new_member.user.id == 80207393):
+                with open('./images/cry.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo)
+            else:
+                with open('./images/left.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, {new_member.user.first_name}! Мы будем по тебе скучать! 😢")
+            
+                #шлем сообщение в админский канал
+                bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
+                                            f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
+                                            f"• Группа: {message.chat.title} [{message.chat.id}]\n")
