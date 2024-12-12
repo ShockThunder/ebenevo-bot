@@ -48,20 +48,21 @@ anekdots = [
 ]
 
 initialise = False
-working_list = []
+working_list = []   # iterable, contains shuffled items
 
 @bot.message_handler(commands=['anekdot'])
 def say_local_anekdot(message):
     global initialise, working_list
 
     if not initialise:
-        working_list = shuffle_local_anekdots(anekdots)
+        working_list = prepare_working_list(anekdots)
         initialise = True
 
+    # catch OutOfBounds
     try:
         bot.reply_to(message, next(working_list))
     except:
-        working_list = shuffle_local_anekdots(anekdots)
+        working_list = prepare_working_list(anekdots)
         bot.reply_to(message, next(working_list))
 
 @bot.message_handler(commands=['banek'])
@@ -69,7 +70,7 @@ def say_web_anekdot(message):
     anekdot = get_web_anekdot()
     bot.reply_to(message, anekdot)
 
-def shuffle_local_anekdots(anekdots):
+def prepare_working_list(anekdots):
     anekdots_copy = anekdots.copy()
     random.shuffle(anekdots_copy)
     iterable = iter(anekdots_copy)
