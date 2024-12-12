@@ -47,16 +47,33 @@ anekdots = [
     "Штирлиц вышел из моря и лёг на гальку. Галька обиделась и ушла.",
 ]
 
+initialise = False
+working_list = []
+
 @bot.message_handler(commands=['anekdot'])
 def say_local_anekdot(message):
-    # Выбор случайного анекдота
-    random_anekdot = random.choice(anekdots)
-    bot.reply_to(message, random_anekdot)
+    global initialise, working_list
+
+    if not initialise:
+        working_list = shuffle_local_anekdots(anekdots)
+        initialise = True
+
+    try:
+        bot.reply_to(message, next(working_list))
+    except:
+        working_list = shuffle_local_anekdots(anekdots)
+        bot.reply_to(message, next(working_list))
 
 @bot.message_handler(commands=['banek'])
 def say_web_anekdot(message):
     anekdot = get_web_anekdot()
     bot.reply_to(message, anekdot)
+
+def shuffle_local_anekdots(anekdots):
+    anekdots_copy = anekdots.copy()
+    random.shuffle(anekdots_copy)
+    iterable = iter(anekdots_copy)
+    return iterable
 
 def get_web_anekdot():
    headers = {
