@@ -48,12 +48,17 @@ anekdots = [
 ]
 
 @bot.message_handler(commands=['anekdot'])
-def say_anekdot(message):
+def say_local_anekdot(message):
     # Выбор случайного анекдота
     random_anekdot = random.choice(anekdots)
     bot.reply_to(message, random_anekdot)
 
-def get_random_anekdot():
+@bot.message_handler(commands=['banek'])
+def say_web_anekdot(message):
+    anekdot = get_web_anekdot()
+    bot.reply_to(message, anekdot)
+
+def get_web_anekdot():
    headers = {
        'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.52'
    }
@@ -69,8 +74,3 @@ def get_random_anekdot():
     br.replace_with('\n')
 
    return anekdot.get_text()
-
-@bot.message_handler(commands=['banek'])
-def say_random_anekdot(message):
-    anekdot = get_random_anekdot()
-    bot.reply_to(message, anekdot)
