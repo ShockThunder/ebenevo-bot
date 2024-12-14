@@ -1,7 +1,7 @@
 import time
 
 from core import ebenevobot
-from data import db_handler
+from modules import db_handler
 
 bot = ebenevobot.bot
 admin_channel_id = ebenevobot.report_channel

@@ -2,7 +2,7 @@ import string
 import random
 
 from core import ebenevobot
-from data import db_handler
+from modules import db_handler
 
 bot = ebenevobot.bot
 who_game_db = db_handler.who_game_db
