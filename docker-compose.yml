@@ -1,0 +1,10 @@
+version: '3.8'  # Укажите версию Docker Compose
+
+services:
+  myapp:
+    build:
+      context: .  # Указывает на текущую директорию для сборки образа
+      dockerfile: Dockerfile  # Указывает на Dockerfile
+    volumes:
+      - ./data:/app/data  # Монтирует папку data на хосте в контейнер
+    command: python ./main.py  # Команда для запуска приложения

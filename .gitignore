@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 /data/user_ids.json
 /data/user_ids.json
+/data/user_ids.json
+/data/who_game.json
