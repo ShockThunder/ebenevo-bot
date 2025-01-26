@@ -52,3 +52,8 @@ def chat_member_update(message):
                 bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
                                             f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
                                             f"• Группа: {message.chat.title} [{message.chat.id}]\n")
+                
+                # удаляем пользователя из баз (пока есть только who_game)
+                who_game_db = db_handler.who_game_db
+                query = db_handler.query
+                who_game_db.remove(query.user_id == new_member.user.id)
