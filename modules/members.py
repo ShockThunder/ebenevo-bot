@@ -14,7 +14,7 @@ def welcome_new_member(message):
                 bot.send_photo(message.chat.id, photo=photo)
         else:
             with open('./images/welcome.jpg', 'rb') as photo:
-                bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, @{new_member.username}!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\nКак тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
+                bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, [{new_member.first_name}](tg://user?id={new_member.id})!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\nКак тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nТак мы сможем помочь тебе быстрее адаптироваться 🐙")
     
     #шлем сообщение в админский канал
     bot.send_message(admin_channel_id, f"➕ #НОВЫЙ_ПОЛЬЗОВАТЕЛЬ\n"
@@ -46,7 +46,7 @@ def chat_member_update(message):
                     bot.send_photo(message.chat.id, photo=photo)
             else:
                 with open('./images/left.jpg', 'rb') as photo:
-                    bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, @{new_member.username}! Мы будем по тебе скучать! 😢")
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, [{new_member.user.first_name}](tg://user?id={new_member.user.id})! Мы будем по тебе скучать! 😢")
             
                 #шлем сообщение в админский канал
                 bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
