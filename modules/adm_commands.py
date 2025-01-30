@@ -2,10 +2,13 @@ import time
 
 from core import ebenevobot
 from modules import db_handler
+from datetime import datetime, timedelta
 
 bot = ebenevobot.bot
 admin_channel_id = ebenevobot.report_channel
+whitelist = ebenevobot.whitelist
 db = db_handler.db
+saved_messages_db = db_handler.saved_messages_db
 query = db_handler.query
 
 def is_admin(message):
@@ -16,17 +19,27 @@ def is_admin(message):
             return True
         else:
             return False
+        
+def check_whitelist(message):
+    chat_id = message.chat.id
+    if chat_id not in whitelist:
+        bot.reply_to(message, "Привет! Чтобы использовать, разверни свою копию. Исходники тут https://github.com/ShockThunder/ebenevo-bot")
+        raise SystemError("ПОПЫТКА ИСПОЛЬЗОВАНИЯ В ДРУГОМ ЧАТЕ") 
+
 
 @bot.message_handler(commands=["start"])
 def start(message):
+    check_whitelist(message)
     bot.reply_to(message, "Привет! Я бот для управления чатом. Напиши /help, чтобы узнать, что я умею.")
 
 @bot.message_handler(commands=['help'])
 def help(message):
+    check_whitelist(message)
     bot.reply_to(message, "/kick - кикнуть пользователя\n/mute - замутить пользователя на определенное время\n/unmute - размутить пользователя\n/warn - выдать предупреждение\n/unwarn - снять предупреждение\n/checkwarns - узнать количество варнов пользователя\n/ban - забанить")
 
 @bot.message_handler(commands=['kick'])
 def kick_user(message):
+    check_whitelist(message)
     # Проверяем, является ли пользователь администратором    
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
@@ -64,6 +77,7 @@ def kick_user(message):
 
 @bot.message_handler(commands=['ban'])
 def ban_user(message):
+    check_whitelist(message)
     # Проверяем, является ли пользователь администратором    
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
@@ -99,6 +113,7 @@ def ban_user(message):
 
 @bot.message_handler(commands=['mute'])
 def mute_user(message):
+    check_whitelist(message)
     # Проверяем, является ли пользователь администратором    
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
@@ -128,6 +143,7 @@ def mute_user(message):
 
 @bot.message_handler(commands=['warn'])
 def warn_user(message):
+    check_whitelist(message)
     # Проверяем, является ли пользователь администратором    
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
@@ -163,6 +179,7 @@ def warn_user(message):
 
 @bot.message_handler(commands=['unwarn'])
 def unwarn_user(message):
+    check_whitelist(message)
     # Проверяем, является ли пользователь администратором    
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
@@ -195,7 +212,7 @@ def unwarn_user(message):
 
 @bot.message_handler(commands=['checkwarns'])
 def check_warns(message):
-    
+    check_whitelist(message)
     # Проверяем, указано ли сообщение с ID пользователя
     if message.reply_to_message:
         # Проверяем, является ли пользователь администратором    
@@ -217,3 +234,25 @@ def check_warns(message):
         bot.reply_to(message, f"Пользователь @{username} имеет {warnings_count} предупреждений.")
     else:
         bot.reply_to(message, f"У пользователя @{username} нет предупреждений.")
+
+@bot.message_handler(commands=['kicklist'])
+def inactive_users(message):
+    if not is_admin(message):
+        bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
+        return
+    
+    # Получаем текущую дату
+    current_time = datetime.now()
+    two_weeks_ago = current_time - timedelta(weeks=2)
+
+    # Запрос к базе данных
+    inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago.strftime('%Y-%m-%d %H:%M:%S'))
+
+    if inactive_users_list:
+        response = "Пользователи, которые не писали более двух недель:\n"
+        for user in inactive_users_list:
+            response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {user['timestamp']}\n"
+    else:
+        response = "Нет пользователей, которые не писали более двух недель."
+
+    bot.reply_to(message, response, parse_mode='Markdown')

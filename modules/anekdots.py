@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 
 from core import ebenevobot
+from modules import adm_commands
+check_whitelist = adm_commands.check_whitelist
 
 bot = ebenevobot.bot
 
@@ -52,6 +54,7 @@ working_list = []   # iterable, contains shuffled items
 
 @bot.message_handler(commands=['anekdot'])
 def say_local_anekdot(message):
+    check_whitelist(message)
     global initialise, working_list
 
     if not initialise:
@@ -67,6 +70,7 @@ def say_local_anekdot(message):
 
 @bot.message_handler(commands=['banek'])
 def say_web_anekdot(message):
+    check_whitelist(message)
     anekdot = get_web_anekdot()
     bot.reply_to(message, anekdot)
 

@@ -3,9 +3,14 @@ import random
 
 from core import ebenevobot
 from modules import db_handler
+from modules import adm_commands
+from datetime import datetime
+
+check_whitelist = adm_commands.check_whitelist
 
 bot = ebenevobot.bot
 who_game_db = db_handler.who_game_db
+saved_messages_db = db_handler.saved_messages_db
 query = db_handler.query
 
 party_mode = True
@@ -29,6 +34,8 @@ def clean_message(message):
 
 @bot.message_handler(commands=['party'])
 def add_user_to_party(message):
+    check_whitelist(message)
+
     user_id = message.from_user.id
     username = message.from_user.username
     first_name = message.from_user.first_name
@@ -44,6 +51,8 @@ def add_user_to_party(message):
 
 @bot.message_handler(commands=['noparty'])
 def add_user_to_party(message):
+    check_whitelist(message)
+
     user_id = message.from_user.id
 
     if who_game_db.contains(query.user_id == user_id):
@@ -54,11 +63,13 @@ def add_user_to_party(message):
 
 @bot.message_handler(commands=['partyoff'])
 def party_off(message):
+    check_whitelist(message)
     party_mode = False
     bot.reply_to(message, f"Режим теганья выключен")    
 
 @bot.message_handler(commands=['partyon'])
 def party_on(message):
+    check_whitelist(message)
     party_mode = True
     bot.reply_to(message, f"Режим теганья включен")
 
@@ -77,8 +88,26 @@ def play_who_game(message, text):
                                   f"\nЧтобы выйти - /noparty"
                                   f"\nЧтобы играть - /party") 
 
+def save_message_link(message):
+    # Получаем ссылку на сообщение и дату отправки
+    chat_id = str(message.chat.id)[4:]
+    message_link = f"https://t.me/c/{chat_id}/{message.message_id}"
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Проверяем, существует ли запись для данного пользователя
+    existing_user = saved_messages_db.get(query.user_id == message.from_user.id)
+    user = message.from_user
+
+    if existing_user:
+        # Если запись существует, обновляем её
+        saved_messages_db.update({'message_link': message_link, 'timestamp': timestamp}, query.user_id == user.id)
+    else:
+        # Если записи нет, создаем новую
+        saved_messages_db.insert({'user_id': user.id, 'username': user.username, 'first_name': user.first_name, 'last_name': user.last_name, 'message_link': message_link, 'timestamp': timestamp})
+
 @bot.message_handler(content_types=['photo'])
-def handle_photo_message(message):        
+def handle_photo_message(message):  
+    check_whitelist(message)      
     if not party_mode:
         return
 
@@ -89,6 +118,9 @@ def handle_photo_message(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_text_message(message):   
+    check_whitelist(message)
+    save_message_link(message)
+
     for keyword, response in keywords.items():
         if keyword == message.text.lower():
             if(keyword == "молодец" and message.from_user.id == 80207393):
