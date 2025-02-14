@@ -9,6 +9,7 @@ admin_channel_id = ebenevobot.report_channel
 whitelist = ebenevobot.whitelist
 db = db_handler.db
 saved_messages_db = db_handler.saved_messages_db
+who_game_db = db_handler.who_game_db
 query = db_handler.query
 
 def is_admin(message):
@@ -57,9 +58,9 @@ def kick_user(message):
                 bot.reply_to(message, "Нельзя кикнуть другого бота.")
                 return
             
-            # Кикаем пользователя
-            bot.kick_chat_member(message.chat.id, user_id)
-            
+            # Анбан убирает пользователя из чата
+            bot.unban_chat_member(message.chat.id, user_id)
+
             # Отправляем сообщение с ником и локальным изображением
             with open('./images/kick.jpg', 'rb') as photo:
                 bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут.")
@@ -68,6 +69,9 @@ def kick_user(message):
             bot.send_message(admin_channel_id, f"🔴 #КИК\n"
                                                 f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
                                                 f"• Группа: {message.chat.title} [{message.chat.id}]\n")
+            
+            # убираем из бд тегов
+            who_game_db.remove(query.user_id == user_id)    
 
         except Exception as e:
             bot.reply_to(message, f"Не удалось кикнуть пользователя: {e}")
@@ -106,6 +110,9 @@ def ban_user(message):
                                       f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
+            # убираем из бд тегов
+            who_game_db.remove(query.user_id == user_id) 
+            
         except Exception as e:
             bot.reply_to(message, f"Не удалось забанить пользователя: {e}")
     else:
