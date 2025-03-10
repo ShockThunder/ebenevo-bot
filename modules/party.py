@@ -34,6 +34,11 @@ def clean_message(message):
     message = ' '.join(message.split())
     return message
 
+@bot.message_handler(commands=['explain_whogame'])
+def explain_who_game(message):
+    explanation = """На сообщение "кто" или "мы" я тегаю случайного человека из чата, как бы отвечая на вопрос. Такой прикол)\n\nЕсли не хочешь чтобы тебя тегали - нажми /noparty"""
+    bot.reply_to(message, explanation)
+
 @bot.message_handler(commands=['party'])
 def add_user_to_party(message):
     check_whitelist(message)
