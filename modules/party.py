@@ -128,10 +128,6 @@ def handle_text_message(message):
     check_whitelist(message)
     save_message_link(message)
 
-    if (message.from_user.id == 274123738 and (random.randint(1, 20) == 1 or "питер" in message.text.lower())):
-        with open('./images/brat.jpg', 'rb') as photo:
-            bot.send_photo(message.chat.id, photo=photo, reply_to_message_id=message.message_id)
-
     for keyword, response in keywords.items():
         if keyword == message.text.lower():
             if(keyword == "молодец" and message.from_user.id == 80207393):
