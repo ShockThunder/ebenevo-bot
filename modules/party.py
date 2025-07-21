@@ -1,6 +1,6 @@
 import string
 import random
-import time
+from time import time
 
 from core import ebenevobot
 from modules import db_handler
