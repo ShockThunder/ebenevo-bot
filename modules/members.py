@@ -76,3 +76,4 @@ def chat_member_update(message):
                 who_game_db = db_handler.who_game_db
                 query = db_handler.query
                 who_game_db.remove(query.user_id == new_member.user.id)
+                saved_messages_db.remove(query.user_id == new_member.user_id)

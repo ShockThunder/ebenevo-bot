@@ -28,6 +28,12 @@ def check_whitelist(message):
         raise SystemError("ПОПЫТКА ИСПОЛЬЗОВАНИЯ В ДРУГОМ ЧАТЕ") 
 
 
+def send_long_message(bot, message, text, parse_mode=None):
+    MAX_LEN = 4096
+    for i in range(0, len(text), MAX_LEN):
+        part = text[i:i+MAX_LEN]
+        bot.reply_to(message, part, parse_mode=parse_mode)
+
 @bot.message_handler(commands=["start"])
 def start(message):
     check_whitelist(message)
@@ -72,6 +78,7 @@ def kick_user(message):
             
             # убираем из бд тегов
             who_game_db.remove(query.user_id == user_id)    
+            saved_messages_db.remove(query.user_id == user_id)    
 
         except Exception as e:
             bot.reply_to(message, f"Не удалось кикнуть пользователя: {e}")
@@ -112,6 +119,7 @@ def ban_user(message):
 
             # убираем из бд тегов
             who_game_db.remove(query.user_id == user_id) 
+            saved_messages_db.remove(query.user_id == user_id) 
             
         except Exception as e:
             bot.reply_to(message, f"Не удалось забанить пользователя: {e}")
@@ -263,4 +271,4 @@ def inactive_users(message):
     else:
         response = "Нет пользователей, которые не писали более двух недель."
 
-    bot.reply_to(message, response, parse_mode='Markdown')
+    send_long_message(bot, message, response, 'Markdown')
