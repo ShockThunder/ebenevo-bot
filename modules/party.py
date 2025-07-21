@@ -1,5 +1,6 @@
 import string
 import random
+import time
 
 from core import ebenevobot
 from modules import db_handler
@@ -99,7 +100,7 @@ def save_message_link(message):
     # Получаем ссылку на сообщение и дату отправки
     chat_id = str(message.chat.id)[4:]
     message_link = f"https://t.me/c/{chat_id}/{message.message_id}"
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = int(time())  # <-- Сохраняем как число
 
     # Проверяем, существует ли запись для данного пользователя
     existing_user = saved_messages_db.get(query.user_id == message.from_user.id)

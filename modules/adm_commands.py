@@ -249,16 +249,17 @@ def inactive_users(message):
         return
     
     # Получаем текущую дату
-    current_time = datetime.now()
-    two_weeks_ago = current_time - timedelta(weeks=2)
+    current_time = int(time())
+    two_weeks_ago = current_time - 14 * 24 * 60 * 60
 
     # Запрос к базе данных
-    inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago.strftime('%Y-%m-%d %H:%M:%S'))
+    inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago)
 
     if inactive_users_list:
         response = "Пользователи, которые не писали более двух недель:\n"
         for user in inactive_users_list:
-            response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {user['timestamp']}\n"
+            last_seen = datetime.fromtimestamp(user['timestamp']).strftime('%Y-%m-%d %H:%M')
+            response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {last_seen}\n"
     else:
         response = "Нет пользователей, которые не писали более двух недель."
 
