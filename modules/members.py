@@ -25,10 +25,9 @@ def welcome_new_member(message):
             with open('./images/welcome.jpg', 'rb') as photo:
                 bot.send_photo(message.chat.id, photo=photo, caption=f"Приветствую, [{new_member.first_name}](tg://user?id={new_member.id})!\nМы рады видеть тебя в нашем чате 🍀\n\nРасскажи нам немного о себе:\nКак тебя можно звать?\nСколько тебе лет?\nКем работаешь и чем любишь увлекаться?\n\nПравила чата читать тут (https://t.me/c/2482107448/48095)\nАнонс мероприятий, барахолка, фото и анкеты мы выкладываем сюда: https://t.me/+nJdcXnmSy-sxYjFi", parse_mode='Markdown')
        
-        # Проверка, существует ли пользователь в базе данных
-        if not who_game_db.contains(query.user_id == new_member.id):
-            # Если пользователь не существует, добавляем его в базу данных
-            who_game_db.insert({'user_id': new_member.id, 'username': new_member.username, 'first_name': new_member.first_name, 'last_name': new_member.last_name})
+        # Обновляем информацию о пользователе во всех базах данных
+        from modules.party import update_user_info_in_all_databases
+        update_user_info_in_all_databases(new_member)
     
     #шлем сообщение в админский канал
     bot.send_message(admin_channel_id, f"➕ #НОВЫЙ_ПОЛЬЗОВАТЕЛЬ\n"
@@ -36,7 +35,14 @@ def welcome_new_member(message):
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
     user = new_member
     timestamp = int(time())
-    saved_messages_db.insert({'user_id': user.id, 'username': user.username, 'first_name': user.first_name, 'last_name': user.last_name, 'message_link': message, 'timestamp': timestamp})
+    saved_messages_db.insert({
+        'user_id': user.id, 
+        'username': user.username, 
+        'first_name': user.first_name, 
+        'last_name': user.last_name or '', 
+        'message_link': message, 
+        'timestamp': timestamp
+    })
     
 
 

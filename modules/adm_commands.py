@@ -198,9 +198,17 @@ def warn_user(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
     
+    # Обновляем информацию о пользователе, который выдает предупреждение
+    from modules.party import update_user_info_in_all_databases
+    update_user_info_in_all_databases(message.from_user)
+    
     if message.reply_to_message:
             user_id = message.reply_to_message.from_user.id
             username = message.reply_to_message.from_user.username
+            
+            # Обновляем информацию о пользователе, которому выдается предупреждение
+            update_user_info_in_all_databases(message.reply_to_message.from_user)
+            
             try:
                 user_data = db.get(query.id == user_id)
                 if user_data:
@@ -248,8 +256,15 @@ def unwarn_user(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
     
+    # Обновляем информацию о пользователе, который снимает предупреждение
+    update_user_info_in_all_databases(message.from_user)
+    
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
+        
+        # Обновляем информацию о пользователе, которому снимается предупреждение
+        update_user_info_in_all_databases(message.reply_to_message.from_user)
+        
         try:
             user_data = db.get(query.id == user_id)
             
@@ -290,6 +305,10 @@ def unwarn_user(message):
 @bot.message_handler(commands=['checkwarns'])
 def check_warns(message):
     check_whitelist(message)
+    
+    # Обновляем информацию о пользователе, который проверяет предупреждения
+    update_user_info_in_all_databases(message.from_user)
+    
     # Проверяем, указано ли сообщение с ID пользователя
     if message.reply_to_message:
         # Проверяем, является ли пользователь администратором    
@@ -298,6 +317,9 @@ def check_warns(message):
             return
         user_id = message.reply_to_message.from_user.id
         username = message.reply_to_message.from_user.username
+        
+        # Обновляем информацию о пользователе, у которого проверяются предупреждения
+        update_user_info_in_all_databases(message.reply_to_message.from_user)
     else:
         # Если команда не была вызвана в ответ на сообщение, покажем свои варны
         user_id = message.from_user.id
