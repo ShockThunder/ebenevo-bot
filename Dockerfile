@@ -13,10 +13,10 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the current directory contents into the container at /app
-COPY . /app/
+COPY src/ /app/
 
 # Create data directory if it doesn't exist
 RUN mkdir -p /app/data
 
 # Command to run the Python script
-CMD ["python", "main.py"]
+CMD ["python", "./main.py"]
