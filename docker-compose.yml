@@ -1,10 +1,13 @@
-version: '3.8'  # Укажите версию Docker Compose
+version: '3.8'
 
 services:
-  myapp:
+  ebenevo-bot:
     build:
-      context: .  # Указывает на текущую директорию для сборки образа
-      dockerfile: Dockerfile  # Указывает на Dockerfile
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./data:/app/data  # Монтирует папку data на хосте в контейнер
-    command: python ./main.py  # Команда для запуска приложения
+      - ./.env:/app/.env  # Монтирует файл .env
+    restart: unless-stopped  # Автоматический перезапуск при сбоях
+    environment:
+      - PYTHONUNBUFFERED=1  # Для корректного вывода логов

@@ -273,29 +273,29 @@ def unwarn_user(message):
                 if warnings_count > 0:
                     warnings_count -= 1
                     db.update({'warnings': warnings_count}, query.id == user_id)
-                
-                if warnings_count == 0:
-                    # Если предупреждений больше нет, можно удалить пользователя из базы
-                    db.remove(query.id == user_id)
-                    try:
-                        with open('./images/unwarn.jpg', 'rb') as photo:
-                            bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
-                    except FileNotFoundError:
-                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
-                    except Exception as e:
-                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений. (Ошибка загрузки изображения: {e})")
+                    
+                    if warnings_count == 0:
+                        # Если предупреждений больше нет, можно удалить пользователя из базы
+                        db.remove(query.id == user_id)
+                        try:
+                            with open('./images/unwarn.jpg', 'rb') as photo:
+                                bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                        except FileNotFoundError:
+                            bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                        except Exception as e:
+                            bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений. (Ошибка загрузки изображения: {e})")
+                    else:
+                        try:
+                            with open('./images/light_unwarn.jpg', 'rb') as photo:
+                                bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+                        except FileNotFoundError:
+                            bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+                        except Exception as e:
+                            bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений. (Ошибка загрузки изображения: {e})")
                 else:
-                    try:
-                        with open('./images/light_unwarn.jpg', 'rb') as photo:
-                            bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
-                    except FileNotFoundError:
-                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
-                    except Exception as e:
-                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений. (Ошибка загрузки изображения: {e})")
+                    bot.reply_to(message, f"У пользователя @{message.reply_to_message.from_user.username} нет предупреждений.")
             else:
-                bot.reply_to(message, f"У пользователя @{message.reply_to_message.from_user.username} нет предупреждений.")
-        else:
-            bot.reply_to(message, "Пользователь не имеет предупреждений.")
+                bot.reply_to(message, "Пользователь не имеет предупреждений.")
         except Exception as e:
             bot.reply_to(message, f"Ошибка при работе с базой данных: {e}")
             return

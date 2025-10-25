@@ -1,0 +1,5 @@
+pyTelegramBotAPI==4.24.0
+python-dotenv==1.1.1
+tinydb==4.8.2
+requests==2.32.3
+beautifulsoup4==4.14.2

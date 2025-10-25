@@ -6,12 +6,17 @@ FROM python:3.10
 # Set the working directory in the container
 WORKDIR /app
 
+# Copy requirements.txt first for better caching
+COPY requirements.txt /app/
+
+# Install required packages from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy the current directory contents into the container at /app
-COPY src/ /app/
-# Копируем файл .env в контейнер
-COPY .env /app/.env  
-# Install required packages
-RUN pip install telebot requests beautifulsoup4 python-dotenv tinydb
+COPY . /app/
+
+# Create data directory if it doesn't exist
+RUN mkdir -p /app/data
 
 # Command to run the Python script
-CMD ["python", "./main.py"]
+CMD ["python", "main.py"]
