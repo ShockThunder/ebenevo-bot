@@ -34,6 +34,25 @@ def send_long_message(bot, message, text, parse_mode=None):
         part = text[i:i+MAX_LEN]
         bot.reply_to(message, part, parse_mode=parse_mode)
 
+def remove_user_from_all_databases(user_id):
+    """
+    Удаляет пользователя из всех баз данных
+    """
+    try:
+        # Удаляем из who_game_db
+        who_game_db.remove(query.user_id == user_id)
+        
+        # Удаляем из saved_messages_db
+        saved_messages_db.remove(query.user_id == user_id)
+        
+        # Удаляем из основной базы с предупреждениями
+        db.remove(query.id == user_id)
+        
+        print(f"Пользователь {user_id} успешно удален из всех баз данных")
+        
+    except Exception as e:
+        print(f"Ошибка при удалении пользователя {user_id} из баз данных: {e}")
+
 @bot.message_handler(commands=["start"])
 def start(message):
     check_whitelist(message)
@@ -81,9 +100,8 @@ def kick_user(message):
                                                 f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
                                                 f"• Группа: {message.chat.title} [{message.chat.id}]\n")
             
-            # убираем из бд тегов
-            who_game_db.remove(query.user_id == user_id)    
-            saved_messages_db.remove(query.user_id == user_id)    
+            # убираем из всех баз данных
+            remove_user_from_all_databases(user_id)    
 
         except Exception as e:
             bot.reply_to(message, f"Не удалось кикнуть пользователя: {e}")
@@ -127,9 +145,8 @@ def ban_user(message):
                                       f"• Кто: {message.reply_to_message.from_user.full_name} [{message.reply_to_message.from_user.id}]\n"
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
 
-            # убираем из бд тегов
-            who_game_db.remove(query.user_id == user_id) 
-            saved_messages_db.remove(query.user_id == user_id) 
+            # убираем из всех баз данных
+            remove_user_from_all_databases(user_id) 
             
         except Exception as e:
             bot.reply_to(message, f"Не удалось забанить пользователя: {e}")

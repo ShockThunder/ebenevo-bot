@@ -73,8 +73,12 @@ def chat_member_update(message):
                                             f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
                                             f"• Группа: {message.chat.title} [{message.chat.id}]\n")
                 
-                # удаляем пользователя из баз (пока есть только who_game)
-                who_game_db = db_handler.who_game_db
-                query = db_handler.query
-                who_game_db.remove(query.user_id == new_member.user.id)
-                saved_messages_db.remove(query.user_id == new_member.user_id)
+                # удаляем пользователя из всех баз данных
+                from modules.adm_commands import remove_user_from_all_databases
+                remove_user_from_all_databases(new_member.user.id)
+        
+        # Обработка случая, когда пользователь был кикнут или забанен
+        elif new_member.status == 'kicked':
+            # Удаляем пользователя из всех баз данных при кике/бане
+            from modules.adm_commands import remove_user_from_all_databases
+            remove_user_from_all_databases(new_member.user.id)
