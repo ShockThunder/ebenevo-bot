@@ -2,6 +2,7 @@ from core import ebenevobot
 from modules import db_handler
 from modules import adm_commands
 from datetime import datetime
+from time import time
 check_whitelist = adm_commands.check_whitelist
 
 bot = ebenevobot.bot
@@ -34,7 +35,7 @@ def welcome_new_member(message):
                                       f"• Кто: {new_member.full_name} [{new_member.id}]\n"
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
     user = new_member
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = int(time())
     saved_messages_db.insert({'user_id': user.id, 'username': user.username, 'first_name': user.first_name, 'last_name': user.last_name, 'message_link': message, 'timestamp': timestamp})
     
 

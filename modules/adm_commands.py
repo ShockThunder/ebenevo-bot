@@ -68,8 +68,13 @@ def kick_user(message):
             bot.unban_chat_member(message.chat.id, user_id)
 
             # Отправляем сообщение с ником и локальным изображением
-            with open('./images/kick.jpg', 'rb') as photo:
-                bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут.")
+            try:
+                with open('./images/kick.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут.")
+            except FileNotFoundError:
+                bot.reply_to(message, f"Пользователь @{username} был кикнут.")
+            except Exception as e:
+                bot.reply_to(message, f"Пользователь @{username} был кикнут. (Ошибка загрузки изображения: {e})")
 
                   #шлем сообщение в админский канал  
             bot.send_message(admin_channel_id, f"🔴 #КИК\n"
@@ -109,8 +114,13 @@ def ban_user(message):
             # Баним пользователя
             res = bot.ban_chat_member(message.chat.id, user_id)
             # Отправляем сообщение с ником и локальным изображением
-            with open('./images/ban.jpg', 'rb') as photo:
-                bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был забанен.")
+            try:
+                with open('./images/ban.jpg', 'rb') as photo:
+                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был забанен.")
+            except FileNotFoundError:
+                bot.reply_to(message, f"Пользователь @{username} был забанен.")
+            except Exception as e:
+                bot.reply_to(message, f"Пользователь @{username} был забанен. (Ошибка загрузки изображения: {e})")
 
             #шлем сообщение в админский канал
             bot.send_message(admin_channel_id, f"🔴 #БАН\n"
@@ -142,14 +152,21 @@ def mute_user(message):
         if args:
             try:
                 duration = int(args[0])
+                # Валидация входных данных
+                if duration < 1:
+                    bot.reply_to(message, "Время должно быть положительным числом.")
+                    return
+                if duration > 1440:
+                    bot.reply_to(message, "Максимальное время - 1 день.")
+                    return
+                if duration > 10080:  # 7 дней
+                    bot.reply_to(message, "Слишком большое время для мута.")
+                    return
             except ValueError:
-                bot.reply_to(message, "Неправильный формат времени.")
+                bot.reply_to(message, "Неправильный формат времени. Используйте число минут.")
                 return
-            if duration < 1:
-                bot.reply_to(message, "Время должно быть положительным числом.")
-                return
-            if duration > 1440:
-                bot.reply_to(message, "Максимальное время - 1 день.")
+            except Exception as e:
+                bot.reply_to(message, f"Ошибка при обработке времени: {e}")
                 return
         bot.restrict_chat_member(chat_id, user_id, until_date=time.time()+duration*60)
         bot.reply_to(message, f"Пользователь {message.reply_to_message.from_user.username} замучен на {duration} минут.")
@@ -167,23 +184,37 @@ def warn_user(message):
     if message.reply_to_message:
             user_id = message.reply_to_message.from_user.id
             username = message.reply_to_message.from_user.username
-            user_data = db.get(query.id == user_id)
-            if user_data:
-                warnings_count = user_data['warnings'] + 1
-                db.update({'warnings': warnings_count}, query.id == user_id)        
-            else:
-                db.insert({'id': user_id, 'warnings': 1})
-                warnings_count = 1
+            try:
+                user_data = db.get(query.id == user_id)
+                if user_data:
+                    warnings_count = user_data.get('warnings', 0) + 1
+                    db.update({'warnings': warnings_count}, query.id == user_id)        
+                else:
+                    db.insert({'id': user_id, 'warnings': 1})
+                    warnings_count = 1
+            except Exception as e:
+                bot.reply_to(message, f"Ошибка при работе с базой данных: {e}")
+                return
 
             if warnings_count >= 3:
                 bot.ban_chat_member(message.chat.id, user_id)
-                            # Отправляем сообщение с ником и локальным изображением
-                with open('./images/ban.jpg', 'rb') as photo:
-                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
+                # Отправляем сообщение с ником и локальным изображением
+                try:
+                    with open('./images/ban.jpg', 'rb') as photo:
+                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
+                except FileNotFoundError:
+                    bot.reply_to(message, f"Пользователь @{username} был кикнут за превышение количества предупреждений.")
+                except Exception as e:
+                    bot.reply_to(message, f"Пользователь @{username} был кикнут за превышение количества предупреждений. (Ошибка загрузки изображения: {e})")
                 db.remove(query.id == user_id)
             else:
-                with open('./images/warn.jpg', 'rb') as photo:
-                    bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
+                try:
+                    with open('./images/warn.jpg', 'rb') as photo:
+                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
+                except FileNotFoundError:
+                    bot.reply_to(message, f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3")
+                except Exception as e:
+                    bot.reply_to(message, f"Пользователь @{username} получил предупреждение. Всего предупреждений: {warnings_count}/3 (Ошибка загрузки изображения: {e})")
 
                 #шлем сообщение в админский канал
                 bot.send_message(admin_channel_id, f"⚠️ #ПРЕДУПРЕЖДЕНИЕ\n"
@@ -202,26 +233,40 @@ def unwarn_user(message):
     
     if message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
-        user_data = db.get(query.id == user_id)
-        
-        if user_data:
-            warnings_count = user_data['warnings']
-            if warnings_count > 0:
-                warnings_count -= 1
-                db.update({'warnings': warnings_count}, query.id == user_id)
+        try:
+            user_data = db.get(query.id == user_id)
+            
+            if user_data:
+                warnings_count = user_data.get('warnings', 0)
+                if warnings_count > 0:
+                    warnings_count -= 1
+                    db.update({'warnings': warnings_count}, query.id == user_id)
                 
                 if warnings_count == 0:
                     # Если предупреждений больше нет, можно удалить пользователя из базы
                     db.remove(query.id == user_id)
-                    with open('./images/unwarn.jpg', 'rb') as photo:
-                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                    try:
+                        with open('./images/unwarn.jpg', 'rb') as photo:
+                            bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                    except FileNotFoundError:
+                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений.")
+                    except Exception as e:
+                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} больше не имеет предупреждений. (Ошибка загрузки изображения: {e})")
                 else:
-                    with open('./images/light_unwarn.jpg', 'rb') as photo:
-                        bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+                    try:
+                        with open('./images/light_unwarn.jpg', 'rb') as photo:
+                            bot.send_photo(message.chat.id, photo=photo, caption=f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+                    except FileNotFoundError:
+                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений.")
+                    except Exception as e:
+                        bot.reply_to(message, f"Пользователь @{message.reply_to_message.from_user.username} теперь имеет {warnings_count} предупреждений. (Ошибка загрузки изображения: {e})")
             else:
                 bot.reply_to(message, f"У пользователя @{message.reply_to_message.from_user.username} нет предупреждений.")
         else:
             bot.reply_to(message, "Пользователь не имеет предупреждений.")
+        except Exception as e:
+            bot.reply_to(message, f"Ошибка при работе с базой данных: {e}")
+            return
     else:
         bot.reply_to(message, "Пожалуйста, ответьте на сообщение пользователя, у которого хотите снять предупреждение.")
 
@@ -240,15 +285,17 @@ def check_warns(message):
         # Если команда не была вызвана в ответ на сообщение, покажем свои варны
         user_id = message.from_user.id
         username = message.from_user.username
+    
+    try:
         user_data = db.get(query.id == user_id)
-    
-    user_data = db.get(query.id == user_id)
-    
-    if user_data:
-        warnings_count = user_data['warnings']
-        bot.reply_to(message, f"Пользователь @{username} имеет {warnings_count} предупреждений.")
-    else:
-        bot.reply_to(message, f"У пользователя @{username} нет предупреждений.")
+        
+        if user_data:
+            warnings_count = user_data.get('warnings', 0)
+            bot.reply_to(message, f"Пользователь @{username} имеет {warnings_count} предупреждений.")
+        else:
+            bot.reply_to(message, f"У пользователя @{username} нет предупреждений.")
+    except Exception as e:
+        bot.reply_to(message, f"Ошибка при получении информации о предупреждениях: {e}")
 
 @bot.message_handler(commands=['kicklist'])
 def inactive_users(message):
@@ -261,14 +308,21 @@ def inactive_users(message):
     two_weeks_ago = current_time - 14 * 24 * 60 * 60
 
     # Запрос к базе данных
-    inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago)
+    try:
+        inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago)
 
-    if inactive_users_list:
-        response = "Пользователи, которые не писали более двух недель:\n"
-        for user in inactive_users_list:
-            last_seen = datetime.fromtimestamp(user['timestamp']).strftime('%Y-%m-%d %H:%M')
-            response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {last_seen}\n"
-    else:
-        response = "Нет пользователей, которые не писали более двух недель."
+        if inactive_users_list:
+            response = "Пользователи, которые не писали более двух недель:\n"
+            for user in inactive_users_list:
+                try:
+                    last_seen = datetime.fromtimestamp(user['timestamp']).strftime('%Y-%m-%d %H:%M')
+                    response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {last_seen}\n"
+                except (KeyError, ValueError, TypeError) as e:
+                    # Пропускаем пользователей с некорректными данными
+                    continue
+        else:
+            response = "Нет пользователей, которые не писали более двух недель."
 
-    send_long_message(bot, message, response, 'Markdown')
+        send_long_message(bot, message, response, 'Markdown')
+    except Exception as e:
+        bot.reply_to(message, f"Ошибка при получении списка неактивных пользователей: {e}")

@@ -72,12 +72,14 @@ def add_user_to_party(message):
 @bot.message_handler(commands=['partyoff'])
 def party_off(message):
     check_whitelist(message)
+    global party_mode
     party_mode = False
     bot.reply_to(message, f"Режим теганья выключен")    
 
 @bot.message_handler(commands=['partyon'])
 def party_on(message):
     check_whitelist(message)
+    global party_mode
     party_mode = True
     bot.reply_to(message, f"Режим теганья включен")
 

@@ -86,13 +86,25 @@ def get_web_anekdot():
    }
 
    url = 'https://baneks.ru/random'
-   r = requests.get(url=url, headers=headers)
+   
+   try:
+       r = requests.get(url=url, headers=headers, timeout=10)
+       r.raise_for_status()  # Проверяем статус ответа
+       
+       soup = BeautifulSoup(r.text, 'html.parser')
+       anekdot_elements = soup.find_all('p')
+       
+       if not anekdot_elements:
+           return "Извините, не удалось получить анекдот. Попробуйте позже."
+           
+       anekdot = anekdot_elements[0]
 
-   soup = BeautifulSoup(r.text, 'html.parser')
+       for br in anekdot.find_all('br'):
+           br.replace_with('\n')
 
-   anekdot = soup.find_all('p')[0]
-
-   for br in anekdot.find_all('br'):
-    br.replace_with('\n')
-
-   return anekdot.get_text()
+       return anekdot.get_text()
+       
+   except requests.exceptions.RequestException as e:
+       return f"Ошибка при получении анекдота: {e}"
+   except Exception as e:
+       return f"Неожиданная ошибка: {e}"
