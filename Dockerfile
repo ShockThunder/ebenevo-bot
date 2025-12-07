@@ -12,11 +12,8 @@ COPY requirements.txt /app/
 # Install required packages from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . /app/
+COPY src/ /app/
+# Копируем файл .env в контейнер
+COPY .env /app/.env  
 
-# Create data directory if it doesn't exist
-RUN mkdir -p /app/data
-
-# Command to run the Python script
-CMD ["python", "main.py"]
+CMD ["python", "./main.py"]

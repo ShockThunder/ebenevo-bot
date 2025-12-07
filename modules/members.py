@@ -28,6 +28,16 @@ def welcome_new_member(message):
         # Обновляем информацию о пользователе во всех базах данных
         from modules.party import update_user_info_in_all_databases
         update_user_info_in_all_databases(new_member)
+        
+        # Добавляем нового пользователя в who_game_db при входе в чат
+        if not who_game_db.contains(query.user_id == new_member.id):
+            who_game_db.insert({
+                'user_id': new_member.id, 
+                'username': new_member.username, 
+                'first_name': new_member.first_name, 
+                'last_name': new_member.last_name or ''
+            })
+            print(f"Добавлен новый пользователь {new_member.id} в who_game_db при входе в чат")
     
     #шлем сообщение в админский канал
     bot.send_message(admin_channel_id, f"➕ #НОВЫЙ_ПОЛЬЗОВАТЕЛЬ\n"

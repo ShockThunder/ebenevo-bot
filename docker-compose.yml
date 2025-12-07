@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./data:/app/data  # Монтирует папку data на хосте в контейнер
-      - ./.env:/app/.env  # Монтирует файл .env
     restart: unless-stopped  # Автоматический перезапуск при сбоях
     environment:
       - PYTHONUNBUFFERED=1  # Для корректного вывода логов

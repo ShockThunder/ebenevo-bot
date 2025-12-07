@@ -117,13 +117,14 @@ def play_who_game(message, text):
 def update_user_info_in_all_databases(user):
     """
     Обновляет информацию о пользователе во всех базах данных
+    Обновляет только существующих пользователей, не добавляет новых
     """
     user_id = user.id
     username = user.username
     first_name = user.first_name
     last_name = user.last_name or ''  # Обрабатываем случай, когда last_name может быть None
     
-    # Обновляем who_game_db
+    # Обновляем who_game_db только если пользователь уже есть в базе
     try:
         existing_who_game = who_game_db.get(query.user_id == user_id)
         if existing_who_game:
@@ -137,15 +138,6 @@ def update_user_info_in_all_databases(user):
                     'last_name': last_name
                 }, query.user_id == user_id)
                 print(f"Обновлена информация о пользователе {user_id} в who_game_db")
-        else:
-            # Если пользователя нет в who_game_db, добавляем его
-            who_game_db.insert({
-                'user_id': user_id, 
-                'username': username, 
-                'first_name': first_name, 
-                'last_name': last_name
-            })
-            print(f"Добавлен пользователь {user_id} в who_game_db")
     except Exception as e:
         print(f"Ошибка при обновлении who_game_db для пользователя {user_id}: {e}")
 
