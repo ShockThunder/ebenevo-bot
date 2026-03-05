@@ -45,12 +45,16 @@ def welcome_new_member(message):
                                       f"• Группа: {message.chat.title} [{message.chat.id}]\n")
     user = new_member
     timestamp = int(time())
+    chat_id_str = str(message.chat.id)
+    if chat_id_str.startswith('-100'):
+        chat_id_str = chat_id_str[4:]
+    message_link = f"https://t.me/c/{chat_id_str}/{message.message_id}"
     saved_messages_db.insert({
-        'user_id': user.id, 
-        'username': user.username, 
-        'first_name': user.first_name, 
-        'last_name': user.last_name or '', 
-        'message_link': message, 
+        'user_id': user.id,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name or '',
+        'message_link': message_link,
         'timestamp': timestamp
     })
     
@@ -83,15 +87,15 @@ def chat_member_update(message):
             else:
                 with open('./images/left.jpg', 'rb') as photo:
                     bot.send_photo(message.chat.id, photo=photo, caption=f"Прощай, [{new_member.user.first_name}](tg://user?id={new_member.user.id})! Мы будем по тебе скучать! 😢", parse_mode='Markdown')
-            
+
                 #шлем сообщение в админский канал
                 bot.send_message(admin_channel_id, f"➖ #УШЕДШИЙ_ПОЛЬЗОВАТЕЛЬ\n"
                                             f"• Кто: {new_member.user.full_name} [{new_member.user.id}]\n"
                                             f"• Группа: {message.chat.title} [{message.chat.id}]\n")
-                
-                # удаляем пользователя из всех баз данных
-                from modules.adm_commands import remove_user_from_all_databases
-                remove_user_from_all_databases(new_member.user.id)
+
+            # Удаляем пользователя из всех баз при выходе из чата (для всех, включая 80207393)
+            from modules.adm_commands import remove_user_from_all_databases
+            remove_user_from_all_databases(new_member.user.id)
         
         # Обработка случая, когда пользователь был кикнут или забанен
         elif new_member.status == 'kicked':

@@ -257,6 +257,7 @@ def unwarn_user(message):
         return
     
     # Обновляем информацию о пользователе, который снимает предупреждение
+    from modules.party import update_user_info_in_all_databases
     update_user_info_in_all_databases(message.from_user)
     
     if message.reply_to_message:
@@ -307,6 +308,7 @@ def check_warns(message):
     check_whitelist(message)
     
     # Обновляем информацию о пользователе, который проверяет предупреждения
+    from modules.party import update_user_info_in_all_databases
     update_user_info_in_all_databases(message.from_user)
     
     # Проверяем, указано ли сообщение с ID пользователя
@@ -341,7 +343,9 @@ def inactive_users(message):
     if not is_admin(message):
         bot.reply_to(message, "У вас нет прав для выполнения этой команды.")
         return
-    
+
+    chat_id = message.chat.id
+
     # Получаем текущую дату
     current_time = int(time())
     two_weeks_ago = current_time - 14 * 24 * 60 * 60
@@ -351,17 +355,34 @@ def inactive_users(message):
         inactive_users_list = saved_messages_db.search(query.timestamp < two_weeks_ago)
 
         if inactive_users_list:
-            response = "Пользователи, которые не писали более двух недель:\n"
+            # Оставляем только тех, кто ещё в чате (не left и не kicked)
+            still_in_chat = []
             for user in inactive_users_list:
                 try:
-                    last_seen = datetime.fromtimestamp(user['timestamp']).strftime('%Y-%m-%d %H:%M')
-                    response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {last_seen}\n"
-                except (KeyError, ValueError, TypeError) as e:
-                    # Пропускаем пользователей с некорректными данными
+                    member = bot.get_chat_member(chat_id, user['user_id'])
+                    if member.status in ('left', 'kicked'):
+                        # Удаляем из БД — вышел из чата, не показываем в киклисте
+                        saved_messages_db.remove(query.user_id == user['user_id'])
+                    else:
+                        still_in_chat.append(user)
+                except Exception:
+                    # Пользователь не найден в чате (уже вышел) — удаляем из БД
+                    saved_messages_db.remove(query.user_id == user['user_id'])
                     continue
-        else:
-            response = "Нет пользователей, которые не писали более двух недель."
 
-        send_long_message(bot, message, response, 'Markdown')
+            if still_in_chat:
+                response = "Пользователи, которые не писали более двух недель:\n"
+                for user in still_in_chat:
+                    try:
+                        last_seen = datetime.fromtimestamp(user['timestamp']).strftime('%Y-%m-%d %H:%M')
+                        response += f"Пользователь: [{user['first_name']}](tg://user?id={user['user_id']}), Ссылка на последнее сообщение: {user['message_link']}, Дата: {last_seen}\n"
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                send_long_message(bot, message, response, 'Markdown')
+            else:
+                bot.reply_to(message, "Нет пользователей, которые не писали более двух недель (или они уже вышли из чата).")
+        else:
+            bot.reply_to(message, "Нет пользователей, которые не писали более двух недель.")
+
     except Exception as e:
         bot.reply_to(message, f"Ошибка при получении списка неактивных пользователей: {e}")
