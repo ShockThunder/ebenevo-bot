@@ -173,8 +173,8 @@ def save_message_link(message):
             'timestamp': timestamp
         })
 
-@bot.message_handler(content_types=['photo'])
-def handle_photo_message(message):  
+@bot.message_handler(content_types=['photo', 'video'])
+def handle_media_message(message):
     check_whitelist(message)
     
     # Обновляем информацию о пользователе
